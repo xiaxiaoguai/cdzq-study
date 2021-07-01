@@ -1,0 +1,11 @@
+video:
+  realpath: D:\\java\\IdeaProjects\\cdzq-study\\target\\video\\
+  abspath:
+image:
+  realpath: D:\\java\\IdeaProjects\\cdzq-study\\target\\image\\
+  abspath:
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 1000MB

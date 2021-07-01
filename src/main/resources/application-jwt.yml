@@ -1,0 +1,10 @@
+jwt:
+  header: Authorization
+  # 令牌前缀
+  token-start-with: Bearer
+  # 秘钥
+  secret: Cdzq123456!
+  # 颁发者
+  issuer: cdzq
+  # 令牌过期时间720 分钟 = 12小时
+  token-expires: 720

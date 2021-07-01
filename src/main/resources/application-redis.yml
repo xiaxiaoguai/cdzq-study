@@ -1,0 +1,17 @@
+spring:
+  redis:
+    host: 192.168.61.100
+    port: 6379
+    database: 0
+    replica-read: false # 主写 从读
+    lettuce:
+      pool:
+        max-wait: 10000  # 连接池最大阻塞等待时间ms（使用负值表示没有限制），默认-1
+        min-idle: 5 # 连接池中的最小空闲连接，默认0
+        max-idle: 20 # 连接池中的最大空闲连接,默认8
+        max-active: 100 # 连接池最大连接数,默认8
+        shutdown-timeout: 1000 #关闭客户端后，保持多久处理正在处理的任务，默认100ms
+        time-between-eviction-runs-millis: -1 # 每隔多少毫秒，关闭空闲连接，保持最少连接可用，建议最小60000 。默认是 -1 表示min-idle不生效，共用一个物理连接
+      #sentinel:
+      #master: mymaster
+      #nodes: 192.168.61.100:26379,192.168.61.101:26379
