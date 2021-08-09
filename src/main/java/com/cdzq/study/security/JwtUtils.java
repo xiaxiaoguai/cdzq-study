@@ -24,6 +24,11 @@ public class JwtUtils {
 
     private final JwtConfig jwtConfig;
 
+    /**
+     * 创建Token
+     * @param claims
+     * @return
+     */
     public String createToken(Map<String, Object> claims) {
         Algorithm algorithm = Algorithm.HMAC256(jwtConfig.getSecret());
         String token = JWT.create()
@@ -35,6 +40,11 @@ public class JwtUtils {
         return jwtConfig.getTokenStartWith() + token;
     }
 
+    /**
+     * 从request请求中获取Token
+     * @param request
+     * @return
+     */
     public String getToken(HttpServletRequest request) {
         final String bearerToken = request.getHeader(jwtConfig.getHeader());
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(jwtConfig.getTokenStartWith())) {
@@ -43,6 +53,12 @@ public class JwtUtils {
         return null;
     }
 
+    /**
+     * 从Token中获取某key的值
+     * @param token
+     * @param key
+     * @return
+     */
     public Claim verifierToken(String token, String key) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(jwtConfig.getSecret());
@@ -52,7 +68,6 @@ public class JwtUtils {
             DecodedJWT jwt = verifier.verify(token);
             return jwt.getClaim(key);
         } catch (JWTVerificationException exception) {
-            log.info(exception.getMessage());
             return null;
         }
     }

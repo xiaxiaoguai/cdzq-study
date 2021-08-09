@@ -1,8 +1,10 @@
 package com.cdzq.study.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 import javax.persistence.*;
@@ -44,12 +46,20 @@ public class LearningTasks {
      * 学习开始时间
      */
     @Column(name = "begin_time")
+    @JsonFormat(
+            pattern = "yyyy-MM-dd HH:mm:ss",
+            timezone = "GMT+8"
+    )
     private Date beginTime;
 
     /**
      * 学习结束时间
      */
     @Column(name = "end_time")
+    @JsonFormat(
+            pattern = "yyyy-MM-dd HH:mm:ss",
+            timezone = "GMT+8"
+    )
     private Date endTime;
 
     /**

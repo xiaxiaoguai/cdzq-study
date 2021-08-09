@@ -27,7 +27,7 @@
         <javaClientGenerator targetPackage="com.cdzq.study.mapper"  targetProject="src/main/java" type="ANNOTATEDMAPPER"/>
 
 
-        <table tableName="subject">
+        <table tableName="exam_my_tasks_reply_answer">
             <generatedKey column="id" sqlStatement="JDBC"/>
         </table>
         

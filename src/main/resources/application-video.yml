@@ -1,9 +1,9 @@
 video:
   realpath: D:\\java\\IdeaProjects\\cdzq-study\\target\\video\\
-  abspath:
+  abspath: http://192.168.61.39:8080/video/
 image:
   realpath: D:\\java\\IdeaProjects\\cdzq-study\\target\\image\\
-  abspath:
+  abspath: http://192.168.61.39:8080/image/
 spring:
   servlet:
     multipart:

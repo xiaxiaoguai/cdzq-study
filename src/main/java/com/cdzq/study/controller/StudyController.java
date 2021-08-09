@@ -48,6 +48,10 @@ public class StudyController {
 
     @Value("${video.realpath}")
     private String videoRealpath;
+    @Value("${video.abspath}")
+    private String videoAbspath;
+    @Value("${image.abspath}")
+    private String imageAbspath;
 
     @GetMapping("/getMyTasks")
     @ApiOperation(value = "根据任务状态查询学习任务")
@@ -65,7 +69,7 @@ public class StudyController {
     @ApiImplicitParam(name = "tasksId", value = "学习任务ID", paramType = "path", dataType = "Long", required = true)
     public ResultData getMyCourse(@NotNull Integer tasksId, HttpServletRequest request) {
         String user_id = request.getAttribute("user_id").toString();
-        String sql = "select c.*,mc.is_complete,mc.p_complete,mc.time_complete from learning_my_course mc,course c where mc.course_id=c.id and c.is_deleted=0 and mc.user_id=? and mc.learning_tasks_id=?";
+        String sql = "select c.*,CONCAT('"+imageAbspath+"',cover) as rcover,mc.is_complete,mc.p_complete,mc.time_complete from learning_my_course mc,course c where mc.course_id=c.id and c.is_deleted=0 and mc.user_id=? and mc.learning_tasks_id=?";
         final List<Map<String, Object>> maps = jdbcTemplate.queryForList(sql, user_id, tasksId);
         return ResultData.ok().data("myCourse", maps);
     }
@@ -78,7 +82,7 @@ public class StudyController {
     })
     public ResultData getMyCourseWare(@NotNull Integer tasksId, @NotNull Integer courseId, HttpServletRequest request) {
         String user_id = request.getAttribute("user_id").toString();
-        String sql = "select c.*,mc.is_complete,mc.p_complete,mc.m_complete,mc.time_complete from learning_my_courseware mc,courseware c where mc.courseware_id=c.id and c.is_deleted=0 and mc.user_id=? and mc.learning_tasks_id=? and mc.course_id=? order by c.sort";
+        String sql = "select c.*,CONCAT('"+videoAbspath+"',source_src) as rsource_src,mc.is_complete,mc.p_complete,mc.m_complete,mc.time_complete from learning_my_courseware mc,courseware c where mc.courseware_id=c.id and c.is_deleted=0 and mc.user_id=? and mc.learning_tasks_id=? and mc.course_id=? order by c.sort";
         final List<Map<String, Object>> maps = jdbcTemplate.queryForList(sql, user_id, tasksId, courseId);
         return ResultData.ok().data("myCourseWare", maps);
     }
@@ -89,7 +93,10 @@ public class StudyController {
     @ApiOperation(value = "根据课件ID播放")
     @ApiImplicitParam(name = "courseWareId", value = "课件ID", paramType = "path", dataType = "Long", required = true)
     public void videoPreview(@NotNull Integer courseWareId,HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String file = jdbcTemplate.queryForObject("SELECT t.source_src FROM courseware t where id=?",String.class,courseWareId);
+        final Map<String, Object> courseWareMap = jdbcTemplate.queryForMap("SELECT t.course_id,t.source_src FROM courseware t where id=?", courseWareId);
+        String file = courseWareMap.get("source_src").toString();
+        int course_id = Integer.parseInt(courseWareMap.get("course_id").toString());
+        jdbcTemplate.update("update course set see_count=see_count+1 where id = ?",course_id);
         String realPath = videoRealpath + file;
         Path filePath = Paths.get(realPath);
         if (Files.exists(filePath)) {
@@ -97,8 +104,14 @@ public class StudyController {
             if (!StringUtils.isEmpty(mimeType)) {
                 response.setContentType(mimeType);
             }
-            request.setAttribute(NonStaticResourceHttpRequestHandler.ATTR_FILE, filePath);
-            nonStaticResourceHttpRequestHandler.handleRequest(request, response);
+
+            try {
+                request.setAttribute(NonStaticResourceHttpRequestHandler.ATTR_FILE, filePath);
+                nonStaticResourceHttpRequestHandler.handleRequest(request, response);
+            }catch (Exception e){
+
+            }
+
         } else {
             ResponseUtil.out(response,ResultData.error().message("视频文件不存在"));
         }

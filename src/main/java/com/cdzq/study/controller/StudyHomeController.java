@@ -107,7 +107,7 @@ public class StudyHomeController {
     @PassToken
     public JqueryUiJson learningTaskslist(HttpServletRequest request) {
         Example example = ExampleUtil.getExample(LearningTasks.class, request);
-        PageHelper.startPage(ExampleUtil.getPage(request), ExampleUtil.getRows(request));
+        PageHelper.startPage(ExampleUtil.getPage(request), ExampleUtil.getRows(request),"id desc");
         List<LearningTasks> tasksList = learningTasksMapper.selectByExample(example);
         JqueryUiJson jqueryUiJson = new JqueryUiJson(ExampleUtil.getPageInfo(tasksList).getTotal(), tasksList);
         return jqueryUiJson;
@@ -445,6 +445,14 @@ public class StudyHomeController {
         Courseware courseware = coursewareMapper.selectByPrimaryKey(id);
         courseware.setIsDeleted((byte) 1);
         coursewareMapper.updateByPrimaryKeySelective(courseware);
+        return ResultData.ok();
+    }
+
+    @ApiOperation(value = "添加课程类型")
+    @PostMapping("addType")
+    @PassToken
+    public ResultData addType(String title,Integer sort) {
+        jdbcTemplate.update("insert into subject (title,sort) value (?,?,?)",title,sort);
         return ResultData.ok();
     }
 

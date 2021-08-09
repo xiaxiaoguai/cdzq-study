@@ -73,10 +73,16 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
     -->
     
     <springProfile name="dev">
-	    <logger name="sql" level="debug"/>
+	    <logger name="com.github.abel533.sql" level="debug"/>
 	    <logger name="com.cdzq.study.mapper" level="debug"/>
+        <logger name="org.springframework.jdbc.core" level="debug"/>
+        <logger name="druid.sql.Statement" level="debug"/>
+        <logger name="druid.sql.Connection" level="debug"/>
+        <logger name="druid.sql.PreparedStatement" level="debug"/>
+        <logger name="druid.sql.ResultSet" level="debug"/>
     </springProfile>
     <logger name="com.alibaba.druid.pool" level="ERROR"/>
+
 
     <!-- 
     root与logger是父子关系，没有特别定义则默认为root，任何一个类只会和一个logger对应，
