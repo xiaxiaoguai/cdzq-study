@@ -15,6 +15,10 @@
  */
 package com.cdzq.study.util;
 
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -24,10 +28,7 @@ import eu.bitwalker.useragentutils.UserAgent;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class IpUtils {
@@ -360,6 +361,7 @@ public class IpUtils {
 
     // 测试
     public static void main(String[] args) {
+        System.out.println(DateUtil.format(new Date(1630911211448L), "yyyy-MM-dd HH:mm:ss"));
         String ipWhilte = "192.168.1.1;" + // 设置单个IP的白名单
                 "192.168.2.*;" + // 设置ip通配符,对一个ip段进行匹配
                 "192.167.*;" + // 设置ip通配符,对一个ip段进行匹配

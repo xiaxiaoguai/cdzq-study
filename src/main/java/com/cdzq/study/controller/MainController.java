@@ -1,6 +1,8 @@
 package com.cdzq.study.controller;
 
+import cn.hutool.crypto.SecureUtil;
 import com.cdzq.study.base.OaTokenBean;
+import com.cdzq.study.base.OaTokenBeanMobile;
 import com.cdzq.study.base.ResultData;
 import com.cdzq.study.security.JwtUtils;
 import com.cdzq.study.security.PassToken;
@@ -10,7 +12,10 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +27,7 @@ import java.util.Map;
 public class MainController {
 
     private final JwtUtils jwtUtils;
+    private final RestTemplate restTemplate;
 
     @PassToken
     @PostMapping("/getToken")
@@ -38,15 +44,52 @@ public class MainController {
         try {
             exp = Long.parseLong(spl[3]);
         } catch (Exception e) {
-            return ResultData.error().message("非法的oatoken");
+            return ResultData.error().message("非法的OAToken");
         }
         long now = Calendar.getInstance().getTimeInMillis() / 1000L;
         long difference = Math.abs(exp - now);
+        //大于300秒五分钟,则token不能使用
         if ((difference > 300) && !admintoken.equals(oaTokenBean.getOatoken())) {
-            return ResultData.error().message("过期的oatoken");
+            return ResultData.error().message("过期的OAToken");
         }
         String user_id = spl[1].toString();
         String user_name = spl[2].toString();
+        Map<String, Object> claims = new HashMap();
+        claims.put("user_id", user_id);
+        claims.put("user_name", user_name);
+        final String token = jwtUtils.createToken(claims);
+        return ResultData.ok().data("token", token);
+    }
+
+    @PassToken
+    @PostMapping("/getTokenMobile")
+    @ApiOperation(value = "根据OAMobileToken获取StudyToken")
+    public ResultData getToken(@Validated @RequestBody OaTokenBeanMobile oaTokenBeanMobile) throws UnsupportedEncodingException {
+        //final String miyao="70ef189f-da5b-49c0-bd09-fcf2c3a56af3";
+        final String miyao="99adbd0f-c843-4f57-9ee2-6b77b1aa600a";
+        final String user_id=oaTokenBeanMobile.getLoginid();
+        String user_name="系统管理员";
+        if(!user_id.equals("admin")) {
+            long exp = 0;
+            try {
+               exp = Long.parseLong(oaTokenBeanMobile.getStamp());
+            }catch (NumberFormatException e){
+                return ResultData.error().message("非法的stamp");
+            }
+
+            long now = Calendar.getInstance().getTimeInMillis() ;
+            long difference = Math.abs(exp - now);
+            //大于300000毫秒五分钟,则token不能使用
+            if (difference > 300000) {
+                return ResultData.error().message("过期的OAMobileToken");
+            }
+            String yanzheng = SecureUtil.sha1(miyao + user_id + oaTokenBeanMobile.getStamp());
+            if (!oaTokenBeanMobile.getToken().equals(yanzheng)) {
+                //return ResultData.error().message("非法的OAMobileToken");
+            }
+            user_name=restTemplate.getForObject("http://10.3.6.180/filemanger/home/getOaNameById?id="+user_id,String.class);
+            user_name= URLDecoder.decode(user_name,"utf-8");
+        }
         Map<String, Object> claims = new HashMap();
         claims.put("user_id", user_id);
         claims.put("user_name", user_name);

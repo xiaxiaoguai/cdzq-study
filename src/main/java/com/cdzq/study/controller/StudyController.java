@@ -182,6 +182,57 @@ public class StudyController {
          return ResultData.ok();
     }
 
+    @GetMapping("/getTopCourse")
+    @ApiOperation(value = "获取最新的N门课程")
+    @ApiImplicitParam(name = "N", value = "N门课程", paramType = "path", dataType = "Long", required = true)
+    public ResultData getCourse(@NotNull Integer N) {
+        String sql = "SELECT  t.id,s.title as typetitle,DATE_FORMAT(t.create_time,'%Y-%m-%d %H:%i:%s') as ctime,t.title,t.title_description,t.teacher,t.teacher_description,t.lesson_num,t.see_count,t.use_count,CONCAT('/zyimg/',IFNULL(cover,'cover.jpg')) as rcover FROM course t,subject s where t.subject_id=s.id and t.is_deleted=0 order by t.id desc limit ?";
+        final List<Map<String, Object>> maps = jdbcTemplate.queryForList(sql, N);
+        return ResultData.ok().data("course", maps);
+    }
+
+    @GetMapping("/getCourseWareByCourseId")
+    @ApiOperation(value = "根据课程ID获取课件")
+    @ApiImplicitParam(name = "courseId", value = "课程ID", paramType = "path", dataType = "Long", required = true)
+    public ResultData getCourseWareByCourseId(@NotNull Integer courseId) {
+        String sql = "SELECT t.id,t.title,t.part_num,t.sort FROM courseware t where t.course_id=? and t.is_deleted=0 order by t.sort";
+        final List<Map<String, Object>> maps = jdbcTemplate.queryForList(sql, courseId);
+        return ResultData.ok().data("courseWare", maps);
+    }
+
+    @GetMapping("/getCourseType")
+    @ApiOperation(value = "获取课程分类")
+    public ResultData getCourseType() {
+        String sql = "SELECT id,title,description,icon FROM subject where is_deleted=0 order by sort";
+        final List<Map<String, Object>> maps = jdbcTemplate.queryForList(sql);
+        return ResultData.ok().data("courseType", maps);
+    }
+
+    @GetMapping("/getCourseByType")
+    @ApiOperation(value = "根据课程类别,获取课程")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "typeId", value = "课程类别ID", paramType = "path", dataType = "Long", required = true),
+            @ApiImplicitParam(name = "page", value = "页码-0开始", paramType = "path", dataType = "Long", required = true),
+            @ApiImplicitParam(name = "rows", value = "每页几行", paramType = "path", dataType = "Long", required = true)
+    })
+    public ResultData getCourseByType(@NotNull Integer typeId, @NotNull Integer page, @NotNull Integer rows) {
+        String sql = "SELECT  t.id,s.title as typetitle,DATE_FORMAT(t.create_time,'%Y-%m-%d %H:%i:%s') as ctime,t.title,t.title_description,t.teacher,t.teacher_description,t.lesson_num,t.see_count,t.use_count,CONCAT('/zyimg/',IFNULL(cover,'cover.jpg')) as rcover FROM course t,subject s where t.subject_id=? and t.subject_id=s.id and t.is_deleted=0 order by t.id desc limit ?,?";
+        final List<Map<String, Object>> maps = jdbcTemplate.queryForList(sql, typeId, page ,rows);
+        return ResultData.ok().data("course", maps);
+    }
+
+    @GetMapping("/getCourseByName")
+    @ApiOperation(value = "根据课程名称,获取课程")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "title", value = "课程名称", paramType = "path", dataType = "String", required = true),
+            @ApiImplicitParam(name = "page", value = "页码-0开始", paramType = "path", dataType = "Long", required = true),
+            @ApiImplicitParam(name = "rows", value = "每页几行", paramType = "path", dataType = "Long", required = true)
+    })
+    public ResultData getCourseByName(@NotNull String title, @NotNull Integer page, @NotNull Integer rows) {
+        String sql = "SELECT  t.id,s.title as typetitle,DATE_FORMAT(t.create_time,'%Y-%m-%d %H:%i:%s') as ctime,t.title,t.title_description,t.teacher,t.teacher_description,t.lesson_num,t.see_count,t.use_count,CONCAT('/zyimg/',IFNULL(cover,'cover.jpg')) as rcover FROM course t,subject s where t.title like ? and t.subject_id=s.id and t.is_deleted=0 order by t.id desc limit ?,?";
+        final List<Map<String, Object>> maps = jdbcTemplate.queryForList(sql, "%"+title+"%", page ,rows);
+        return ResultData.ok().data("course", maps);
+    }
 
 
 

@@ -243,6 +243,7 @@ public class StudyHomeController {
                         myCourseware.setCoursewareId(Integer.parseInt(courseware.get("id").toString()));
                         myCourseware.setIsComplete((byte) 0);
                         myCourseware.setpComplete((byte) 0);
+                        myCourseware.setrComplete(0);
                         myCourseware.setmComplete(0);
                         learningMyCoursewareMapper.insert(myCourseware);
                     }

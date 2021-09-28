@@ -60,7 +60,7 @@ public class ExamController {
     @ApiImplicitParam(name = "myTasksId", value = "我的考试任务ID", paramType = "path", dataType = "Long", required = true)
     public ResultData getMyCourse(@NotNull Integer myTasksId, HttpServletRequest request) {
         String user_id = request.getAttribute("user_id").toString();
-        String sql = "SELECT m.id,m.user_id,m.exam_tasks_id,case is_qualified when 1 then '合格' when 2 then '优秀' else '不合格' end as is_qualified,m.score,DATE_FORMAT(m.time_qualified,'%Y-%m-%d %H:%i:%s') as time_qualified,t.title,DATE_FORMAT(t.begin_time,'%Y-%m-%d %H:%i:%s') as begin_time,DATE_FORMAT(t.end_time,'%Y-%m-%d %H:%i:%s') as end_time,case answercount when -1 then '不限制' else answercount end as answercount,case answertime when -1 then '不限制' else answertime end as answertime,total_score,round(total_score*qualified*0.01) as qualified,round(total_score*excellent*0.01) as excellent FROM exam_my_tasks m,exam_tasks t where m.exam_tasks_id=t.id and m.id=?";
+        String sql = "SELECT m.id,m.user_id,m.exam_tasks_id,case is_qualified when 1 then '合格' when 2 then '优秀' else '不合格' end as is_qualified,case t.is_score when 0 then null else m.score end as score,DATE_FORMAT(m.time_qualified,'%Y-%m-%d %H:%i:%s') as time_qualified,t.title,DATE_FORMAT(t.begin_time,'%Y-%m-%d %H:%i:%s') as begin_time,DATE_FORMAT(t.end_time,'%Y-%m-%d %H:%i:%s') as end_time,case answercount when -1 then '不限制' else answercount end as answercount,case answertime when -1 then '不限制' else answertime end as answertime,total_score,round(total_score*qualified*0.01) as qualified,round(total_score*excellent*0.01) as excellent FROM exam_my_tasks m,exam_tasks t where m.exam_tasks_id=t.id and m.id=?";
         final List<Map<String, Object>> mapslist = jdbcTemplate.queryForList(sql, myTasksId);
         if (mapslist.size() > 0) {
             Map<String, Object> maps = mapslist.get(0);
@@ -142,15 +142,31 @@ public class ExamController {
         if(myTasks==null || !myTasks.getUserId().equals(user_id)){
             return ResultData.error().message("参数非法！");
         }
+        //判断是否重复提交
+        ExamMyTasksReplyAnswer tmp=new ExamMyTasksReplyAnswer();
+        tmp.setMyTasksReplyId(myTasksReplyId);
+        final int selectCount = examMyTasksReplyAnswerMapper.selectCount(tmp);
+        if(selectCount>0){
+            return ResultData.error().message("重复提交");
+        }
         final ExamTasks tasks = examTasksMapper.selectByPrimaryKey(myTasks.getExamTasksId());
         //判断已考次数
         final int answercount = tasks.getAnswercount();
         if(answercount!=-1){
             final int usecount = jdbcTemplate.queryForObject("SELECT count(*) as sl FROM exam_my_tasks_reply where my_tasks_id=?", Integer.class,myTasksId);
-            if(usecount>=answercount){
+            if(usecount>answercount){
                 return ResultData.error().message("考试次数已用完");
             }
         }
+        ExamMyTasksReply examMyTasksReply = examMyTasksReplyMapper.selectByPrimaryKey(myTasksReplyId);
+        //判断是否超时,大于30秒
+        final int answertime = tasks.getAnswertime();
+        if(answertime!=-1) {
+            if (DateUtil.between(examMyTasksReply.getBeginTime(), new Date(), DateUnit.SECOND) > (answertime*60+30)) {
+                return ResultData.error().message("已超时，请重新作答");
+            }
+        }
+        //开始判断答案
         float total_score = 0;
         final List<Map<String, Object>> questionsOne = jdbcTemplate.queryForList("SELECT e.id,e.question_id,e.question_type,e.question_score,q.answer FROM exam_questions e,questions_one q where e.question_id=q.id and e.question_type=? and e.exam_tasks_id=?", 1, myTasks.getExamTasksId());
         final List<Map<String, Object>> questionsMore = jdbcTemplate.queryForList("SELECT e.id,e.question_id,e.question_type,e.question_score,q.answer FROM exam_questions e,questions_more q where e.question_id=q.id and e.question_type=? and e.exam_tasks_id=?", 2, myTasks.getExamTasksId());
@@ -180,17 +196,16 @@ public class ExamController {
             examMyTasksReplyAnswerMapper.insert(examMyTasksReplyAnswer);
         }
         //插入回复主表
-        ExamMyTasksReply examMyTasksReply=examMyTasksReplyMapper.selectByPrimaryKey(myTasksReplyId);
         examMyTasksReply.setEndTime(new Date());
         examMyTasksReply.setIp(IpUtils.getIp(request));
         examMyTasksReply.setScore(total_score);
         examMyTasksReplyMapper.updateByPrimaryKeySelective(examMyTasksReply);
         //判断成绩是否合格
         Map<String,Object> result=new HashMap<>();
-        if(total_score>=tasks.getExcellent()) {
+        if(total_score>=Math.round((float)tasks.getExcellent()*tasks.getTotalScore()*0.01)) {
             myTasks.setIsQualified((byte) 2);
             result.put("qualified","优秀");
-        }else if(total_score>=tasks.getQualified()){
+        }else if(total_score>=Math.round((float)tasks.getQualified()*tasks.getTotalScore()*0.01)){
             myTasks.setIsQualified((byte) 1);
             result.put("qualified","合格");
         }else{
